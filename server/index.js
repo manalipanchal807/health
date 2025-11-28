@@ -17,7 +17,7 @@ app.use(cors({
   origin: [
     "http://localhost:5173", // Local development
     "http://localhost:3000",
-    "https://personalhealthrecord.netlify.app" // Netlify frontend (no trailing slash)
+    "https://personalhealthrecord.vercel.app/" // Netlify frontend (no trailing slash)
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Auth"],
