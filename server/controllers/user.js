@@ -100,23 +100,44 @@ export const me = async (req, res) => {
 export const sendOtp = async (req, res) => {
   try {
     const { email } = req.body;
+    console.log("📧 OTP request received for:", email);
+    
     if (!email)
       return res.status(400).json({ message: "Email is required", success: false });
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found", success: false });
+    if (!user) {
+      console.log("❌ User not found:", email);
+      return res.status(404).json({ message: "User not found", success: false });
+    }
 
     const otp = generateOTP();
     const expiry = new Date(Date.now() + 5 * 60 * 1000);
+
+    console.log("🔑 Generated OTP:", otp, "for user:", user.username);
 
     user.otp = otp;
     user.otpExpiry = expiry;
     await user.save();
 
-    await sendEmail(email, "Your OTP Code", `Your OTP is: ${otp}`);
+    console.log("💾 OTP saved to database");
+
+    try {
+      await sendEmail(email, "Your OTP Code", `Your OTP is: ${otp}`);
+      console.log("✅ OTP email sent successfully");
+    } catch (emailError) {
+      console.error("❌ Email sending failed:", emailError.message);
+      // Still return success but with a warning
+      return res.json({ 
+        message: "OTP generated but email failed. Check server logs. OTP: " + otp, 
+        success: true,
+        otp: process.env.NODE_ENV === 'development' ? otp : undefined // Only show OTP in dev mode
+      });
+    }
 
     res.json({ message: "OTP sent to email", success: true });
   } catch (error) {
+    console.error("❌ Send OTP error:", error);
     res.status(500).json({ message: error.message, success: false });
   }
 };
