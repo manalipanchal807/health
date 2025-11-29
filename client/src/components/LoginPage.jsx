@@ -49,9 +49,19 @@ const LoginPage = () => {
     setLoading(true);
     console.log("📧 Requesting OTP for:", email);
     console.log("📧 API URL:", url);
+    console.log("📧 Full endpoint:", `${url}/user/send-otp`);
     
     try {
-      const response = await axios.post(`${url}/user/send-otp`, { email });
+      const response = await axios.post(
+        `${url}/user/send-otp`, 
+        { email },
+        { 
+          timeout: 30000, // 30 second timeout
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       console.log("✅ OTP Response:", response.data);
       
       // Check if OTP is in response (for development)
@@ -67,9 +77,23 @@ const LoginPage = () => {
       console.error("❌ OTP Request failed:", error);
       console.error("❌ Error response:", error.response?.data);
       console.error("❌ Error status:", error.response?.status);
+      console.error("❌ Error message:", error.message);
       
-      const errorMsg = error.response?.data?.message || error.message || "Failed to send OTP";
-      toast.error(errorMsg);
+      let errorMsg = "Failed to send OTP";
+      
+      if (error.code === 'ECONNABORTED') {
+        errorMsg = "Request timeout. Server is taking too long to respond.";
+      } else if (error.code === 'ERR_NETWORK') {
+        errorMsg = "Network error. Check your internet connection.";
+      } else if (error.response) {
+        errorMsg = error.response.data?.message || `Server error: ${error.response.status}`;
+      } else if (error.request) {
+        errorMsg = "No response from server. Server might be down.";
+      } else {
+        errorMsg = error.message;
+      }
+      
+      toast.error(errorMsg, { duration: 5000 });
     } finally {
       setLoading(false);
     }
