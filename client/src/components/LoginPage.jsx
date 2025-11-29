@@ -43,11 +43,26 @@ const LoginPage = () => {
   // ----------------- OTP LOGIN -----------------
   const requestOtp = async () => {
     if (!email) return toast.error("Enter email first");
+    
+    console.log("📧 Requesting OTP for:", email);
+    console.log("📧 API URL:", url);
+    
     try {
-      await axios.post(`${url}/user/send-otp`, { email });
+      const response = await axios.post(`${url}/user/send-otp`, { email });
+      console.log("✅ OTP Response:", response.data);
+      
+      // Check if OTP is in response (for development)
+      if (response.data.otp) {
+        console.log("🔑 OTP (DEV MODE):", response.data.otp);
+        toast.success(`OTP: ${response.data.otp} (Check console & email)`);
+      } else {
+        toast.success("OTP sent to your email");
+      }
+      
       setOtpRequested(true);
-      toast.success("OTP sent to your email");
     } catch (error) {
+      console.error("❌ OTP Request failed:", error);
+      console.error("❌ Error response:", error.response?.data);
       toast.error(error.response?.data?.message || "Failed to send OTP");
     }
   };
