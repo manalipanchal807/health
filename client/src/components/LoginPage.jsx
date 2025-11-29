@@ -10,6 +10,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [otpRequested, setOtpRequested] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const { login,url } = useContext(AppContext);
   const navigate = useNavigate();
@@ -43,7 +44,9 @@ const LoginPage = () => {
   // ----------------- OTP LOGIN -----------------
   const requestOtp = async () => {
     if (!email) return toast.error("Enter email first");
+    if (loading) return; // Prevent multiple clicks
     
+    setLoading(true);
     console.log("📧 Requesting OTP for:", email);
     console.log("📧 API URL:", url);
     
@@ -54,16 +57,21 @@ const LoginPage = () => {
       // Check if OTP is in response (for development)
       if (response.data.otp) {
         console.log("🔑 OTP (DEV MODE):", response.data.otp);
-        toast.success(`OTP: ${response.data.otp} (Check console & email)`);
+        toast.success(`OTP: ${response.data.otp} (Check console & email)`, { duration: 6000 });
       } else {
-        toast.success("OTP sent to your email");
+        toast.success("OTP sent to your email. Check your inbox!");
       }
       
       setOtpRequested(true);
     } catch (error) {
       console.error("❌ OTP Request failed:", error);
       console.error("❌ Error response:", error.response?.data);
-      toast.error(error.response?.data?.message || "Failed to send OTP");
+      console.error("❌ Error status:", error.response?.status);
+      
+      const errorMsg = error.response?.data?.message || error.message || "Failed to send OTP";
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -197,17 +205,34 @@ const LoginPage = () => {
               <button
                 type="button"
                 onClick={requestOtp}
-                className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition duration-300"
+                disabled={loading}
+                className={`w-full text-white py-2 rounded-lg transition duration-300 ${
+                  loading 
+                    ? "bg-gray-400 cursor-not-allowed" 
+                    : "bg-green-600 hover:bg-green-700"
+                }`}
               >
-                Send OTP
+                {loading ? "Sending OTP..." : "Send OTP"}
               </button>
             ) : (
-              <button
-                type="submit"
-                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300"
-              >
-                Verify & Login
-              </button>
+              <div>
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300"
+                >
+                  Verify & Login
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOtpRequested(false);
+                    setOtp("");
+                  }}
+                  className="w-full mt-2 text-sm text-gray-600 hover:text-gray-800"
+                >
+                  Resend OTP
+                </button>
+              </div>
             )}
           </form>
         )}

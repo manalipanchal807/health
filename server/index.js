@@ -41,6 +41,20 @@ app.get("/", (req, res) => {
   res.send("Hello World");
 });
 
+// Health check endpoint to verify configuration
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    environment: {
+      nodeEnv: process.env.NODE_ENV || "development",
+      mongoConnected: mongoose.connection.readyState === 1,
+      emailConfigured: !!(process.env.EMAIL_USER && process.env.EMAIL_PASS),
+      emailUser: process.env.EMAIL_USER ? "✅ Set" : "❌ Not set"
+    }
+  });
+});
+
 const port = process.env.PORT || 3001;
 app.listen(port, () => {
   console.log(`🚀 App is running on port ${port}`);
